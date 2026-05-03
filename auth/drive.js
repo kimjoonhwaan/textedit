@@ -114,6 +114,7 @@ export async function renameDriveFolder(userId, fromPath, toPath) {
   const newName = toSegments[toSegments.length - 1];
   const newParentId = await ensureFolderPath(drive, rootId, parentSegments);
   const meta = await drive.files.get({ fileId: folderId, fields: "id, parents, name" });
+  await assertOwnedByApp(userId, drive, meta.data);
   const params = {
     fileId: folderId,
     requestBody: { name: newName },
@@ -135,6 +136,8 @@ export async function deleteDriveFolderByPath(userId, pathString) {
   if (segments.length === 0) return { found: false };
   const folderId = await findFolderByPath(drive, rootId, segments);
   if (!folderId) return { found: false };
+  const meta = await drive.files.get({ fileId: folderId, fields: "id, parents" });
+  await assertOwnedByApp(userId, drive, meta.data);
   await drive.files.delete({ fileId: folderId });
   return { found: true, id: folderId };
 }

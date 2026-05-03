@@ -47,22 +47,26 @@ const langsmithClient = process.env.LANGSMITH_API_KEY
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (!SESSION_SECRET) {
-  console.warn(
-    "[warn] SESSION_SECRET 환경변수가 없습니다. 인증 기능이 작동하지 않습니다."
-  );
+  console.error("[fatal] SESSION_SECRET 환경변수가 없습니다. 서버를 종료합니다.");
+  process.exit(1);
+}
+if (Buffer.from(SESSION_SECRET, "hex").length < 32) {
+  console.error("[fatal] SESSION_SECRET은 최소 32바이트 hex (64자) 이상이어야 합니다.");
+  process.exit(1);
 }
 
 app.use(express.json({ limit: "8mb" }));
 app.use(cookieParser());
 app.use(
   session({
-    secret: SESSION_SECRET || "dev-secret-please-change",
+    secret: SESSION_SECRET,
     name: "mde.sid",
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 14,
     },
   })
@@ -453,7 +457,8 @@ app.post("/api/tags/auto", requireAuth, async (req, res) => {
         error: detail,
         end_time: new Date().toISOString(),
       });
-      return res.status(500).json({ error: "태그 생성 실패", detail });
+      console.error("[tags] OpenAI 오류:", detail);
+      return res.status(500).json({ error: "태그 생성 실패. 잠시 후 다시 시도해 주세요." });
     }
     const data = await response.json();
     const raw = data.choices?.[0]?.message?.content ?? "";
@@ -530,7 +535,8 @@ app.post("/api/ai/ask", requireAuth, async (req, res) => {
         error: detail,
         end_time: new Date().toISOString(),
       });
-      return res.status(500).json({ error: "AI 답변 생성 실패", detail });
+      console.error("[ai/ask] OpenAI 오류:", detail);
+      return res.status(500).json({ error: "AI 답변 생성 실패. 잠시 후 다시 시도해 주세요." });
     }
     const data = await response.json();
     const answer = data.choices?.[0]?.message?.content ?? "";
@@ -634,7 +640,8 @@ app.post("/api/ai/pptify", requireAuth, async (req, res) => {
         error: detail,
         end_time: new Date().toISOString(),
       });
-      return res.status(500).json({ error: "AI 슬라이드 생성 실패", detail });
+      console.error("[ai/pptify] OpenAI 오류:", detail);
+      return res.status(500).json({ error: "AI 슬라이드 생성 실패. 잠시 후 다시 시도해 주세요." });
     }
     const data = await response.json();
     const raw = data.choices?.[0]?.message?.content ?? "{}";
@@ -925,7 +932,8 @@ app.get("/auth/google", (req, res) => {
     const url = buildAuthUrl(state);
     res.redirect(url);
   } catch (error) {
-    res.status(500).send(`OAuth 설정 오류: ${error.message}`);
+    console.error("[oauth] /auth/google 오류:", error);
+    res.status(500).send("OAuth 설정 오류가 발생했습니다. 관리자에게 문의하세요.");
   }
 });
 
@@ -957,7 +965,7 @@ app.get("/auth/google/callback", async (req, res) => {
     res.redirect("/");
   } catch (error) {
     console.error("[oauth] callback 실패:", error);
-    res.status(500).send(`Google 인증 처리 실패: ${error.message}`);
+    res.status(500).send("Google 인증 처리에 실패했습니다. 다시 시도해 주세요.");
   }
 });
 

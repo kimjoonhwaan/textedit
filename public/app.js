@@ -1381,13 +1381,15 @@ const processWikiLinks = (content) =>
     const displayName = alias ? alias.trim() : noteName;
     const exists = allNotes.includes(noteName);
     const cls = exists ? "wikilink" : "wikilink wikilink-missing";
-    return `<a class="${cls}" data-note="${noteName.replace(/"/g, "&quot;")}">${displayName}</a>`;
+    return `<a class="${cls}" data-note="${escapeHtml(noteName)}">${escapeHtml(displayName)}</a>`;
   });
 
 const renderPreview = (content, highlightQuery = "") => {
   if (!preview) return;
   if (window.marked) {
-    let html = window.marked.parse(processWikiLinks(content || ""));
+    let html = window.DOMPurify
+      ? window.DOMPurify.sanitize(window.marked.parse(processWikiLinks(content || "")))
+      : window.marked.parse(processWikiLinks(content || ""));
     if (highlightQuery) {
       const safeQuery = escapeRegExp(highlightQuery);
       const regex = new RegExp("(" + safeQuery + ")", "gi");
@@ -1757,7 +1759,7 @@ const openGraphView = async () => {
   if (graphTagFilter) {
     graphTagFilter.innerHTML =
       '<option value="">태그 전체</option>' +
-      [...allTags].sort().map((t) => `<option value="${t}">${t}</option>`).join("");
+      [...allTags].sort().map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
   }
 
   graphContainer.innerHTML = "";
@@ -1802,9 +1804,9 @@ const openGraphView = async () => {
         const summary = summaryMap.get(n.id) ?? "";
         const conn = totalConn.get(n.id) ?? 0;
         card.innerHTML =
-          `<div class="gnc-name">📄 ${n.id.split("/").pop()}</div>` +
+          `<div class="gnc-name">📄 ${escapeHtml(n.id.split("/").pop())}</div>` +
           `<div class="gnc-stats">연결 ${conn}개</div>` +
-          (summary ? `<div class="gnc-summary">${summary}</div>` : `<div class="gnc-summary gnc-empty">요약 없음</div>`);
+          (summary ? `<div class="gnc-summary">${escapeHtml(summary)}</div>` : `<div class="gnc-summary gnc-empty">요약 없음</div>`);
         card.addEventListener("click", () => {
           graphModal.classList.add("hidden");
           loadNote(n.id);
@@ -1877,9 +1879,9 @@ const openGraphView = async () => {
         const inc = inCount.get(d.id) ?? 0;
         const summary = summaryMap.get(d.id) ?? "";
         tooltip.innerHTML =
-          `<div class="gt-name">📄 ${d.id}</div>` +
+          `<div class="gt-name">📄 ${escapeHtml(d.id)}</div>` +
           `<div class="gt-stats">→ 발신: ${out}&nbsp;&nbsp;← 백링크: ${inc}</div>` +
-          (summary ? `<div class="gt-divider"></div><div class="gt-summary">${summary}</div>` : "");
+          (summary ? `<div class="gt-divider"></div><div class="gt-summary">${escapeHtml(summary)}</div>` : "");
         tooltip.style.display = "block";
       }, 200);
     })
