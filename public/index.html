@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown Editor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="login-overlay" class="login-overlay hidden">
+      <div class="login-card">
+        <h1>📝 Markdown Editor</h1>
+        <p>Google 계정으로 로그인하여 노트를 관리하세요.</p>
+        <a id="login-google-btn" class="login-google" href="/auth/google">
+          <span class="login-google-icon">G</span>
+          <span>Google로 로그인</span>
+        </a>
+        <p class="login-hint">로그인 시 Google Drive의 "MarkdownEditor" 폴더에만 접근합니다.</p>
+      </div>
+    </div>
+    <div class="app">
+      <aside class="sidebar">
+        <div id="user-widget" class="user-widget hidden">
+          <img id="user-avatar" class="user-avatar" alt="" />
+          <span id="user-name" class="user-name"></span>
+          <button id="logout-btn" type="button" class="logout-btn" title="로그아웃">⎋</button>
+        </div>
+        <h1>문서</h1>
+        <div class="sidebar-top-actions">
+          <button id="graph-view-btn" type="button">🕸 그래프 뷰</button>
+        </div>
+        <div class="sidebar-section">
+          <div class="drive-section-header">
+            <h2>☁ Google Drive</h2>
+            <div class="drive-section-actions">
+              <button id="drive-sync-all-btn" type="button" title="모든 Drive 노트를 로컬에 동기화">⇣ 전체</button>
+              <button id="drive-refresh-btn" type="button" title="목록 새로고침">↻</button>
+            </div>
+          </div>
+          <ul id="drive-note-list" class="drive-note-list"></ul>
+        </div>
+        <div class="new-note">
+          <input id="note-name" type="text" placeholder="새 문서 이름" />
+          <button id="create-note">생성</button>
+        </div>
+        <div class="new-folder">
+          <button id="create-folder" type="button">폴더 생성</button>
+        </div>
+        <div class="search-box">
+          <input id="search-input" type="text" placeholder="검색어 입력" />
+          <button id="search-btn">검색</button>
+        </div>
+        <div class="sidebar-section">
+          <h2>즐겨찾기</h2>
+          <ul id="favorite-list"></ul>
+        </div>
+        <div class="sidebar-section">
+          <div class="tag-section-header">
+            <h2>태그</h2>
+            <button id="clear-tag-filter" type="button">해제</button>
+          </div>
+          <ul id="tag-list" class="tag-list"></ul>
+        </div>
+        <div class="sidebar-section">
+          <h2>폴더 구조</h2>
+          <ul id="note-list" class="folder-tree"></ul>
+        </div>
+        <div class="search-results">
+          <h2>검색 결과</h2>
+          <ul id="search-list"></ul>
+        </div>
+        <div class="sidebar-section">
+          <h2>최근 문서</h2>
+          <ul id="recent-list"></ul>
+        </div>
+        <div class="sidebar-section" id="backlinks-section" style="display:none">
+          <h2>백링크</h2>
+          <ul id="backlink-list"></ul>
+        </div>
+      </aside>
+      <main class="editor">
+        <div class="toolbar">
+          <span id="current-note">선택된 문서 없음</span>
+          <div class="find-controls">
+            <input
+              id="doc-search-input"
+              type="text"
+              placeholder="문서 내 검색"
+            />
+            <button id="doc-search-prev" type="button">이전</button>
+            <button id="doc-search-next" type="button">다음</button>
+            <span id="doc-search-count">0/0</span>
+          </div>
+          <div class="view-controls">
+            <button id="view-edit" class="toggle">편집</button>
+            <button id="view-split" class="toggle active">분할</button>
+            <button id="view-preview" class="toggle">미리보기</button>
+          </div>
+          <div class="template-controls">
+            <label class="control">
+              템플릿
+              <select id="template-select">
+                <option value="">선택...</option>
+              </select>
+            </label>
+            <button id="apply-template" type="button">삽입</button>
+            <button id="save-template" type="button">템플릿 저장</button>
+          </div>
+          <div class="format-controls">
+            <label class="control">
+              크기
+              <select id="font-size">
+                <option value="12">12</option>
+                <option value="14">14</option>
+                <option value="16" selected>16</option>
+                <option value="18">18</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+              </select>
+            </label>
+            <label class="control">
+              색상
+              <input id="font-color" type="color" value="#1f1f2a" />
+            </label>
+          <button id="bold-toggle" class="toggle">굵게</button>
+            <button id="spell-toggle" class="toggle">맞춤법</button>
+          </div>
+          <div class="save-controls">
+            <span id="save-status" class="save-status">저장됨</span>
+            <button id="history-toggle" type="button">버전</button>
+            <button id="save-note">저장</button>
+          </div>
+          <div class="ai-controls">
+            <button id="ai-ask" type="button">AI 질문</button>
+            <span id="ai-ask-status" class="ai-ask-status"></span>
+          </div>
+          <div class="ppt-controls">
+            <button id="export-ppt" type="button" title="PPT로 내보내기">📊 PPT</button>
+          </div>
+          <div class="drive-controls">
+            <button id="upload-drive-btn" type="button" title="현재 노트를 Google Drive로 업로드">☁ Drive로</button>
+            <span id="note-source-indicator" class="note-source-indicator"></span>
+          </div>
+        </div>
+        <div class="tag-panel">
+          <span class="tag-panel-title">태그</span>
+          <div id="note-tags" class="tag-chip-list"></div>
+          <input id="tag-input" type="text" placeholder="태그 입력 후 Enter" />
+          <button id="add-tag" type="button">추가</button>
+          <button id="auto-tag" type="button">자동 태그</button>
+          <span id="auto-tag-status" class="auto-tag-status"></span>
+        </div>
+        <div id="history-panel" class="history-panel hidden">
+          <div class="history-header">
+            <strong>버전 히스토리</strong>
+            <button id="history-close" type="button">닫기</button>
+          </div>
+          <ul id="history-list"></ul>
+        </div>
+        <div class="editor-pane view-split">
+          <textarea id="editor" placeholder="Markdown을 작성하세요..." spellcheck="true" lang="ko"></textarea>
+          <div id="preview" class="preview"></div>
+        </div>
+      </main>
+    </div>
+    <div id="toast-container" class="toast-container"></div>
+
+    <div id="graph-modal" class="graph-modal hidden">
+      <div class="graph-modal-header">
+        <span>노트 그래프</span>
+        <div class="graph-header-controls">
+          <select id="graph-sort" title="정렬">
+            <option value="none">정렬 기본</option>
+            <option value="connections">연결 많은 순</option>
+            <option value="mtime">최신 문서</option>
+          </select>
+          <select id="graph-tag-filter" title="태그 필터">
+            <option value="">태그 전체</option>
+          </select>
+          <button id="graph-filter-reset" type="button">초기화</button>
+          <button id="overview-btn" type="button">전체 보기</button>
+        </div>
+        <button id="graph-modal-close" type="button">닫기</button>
+      </div>
+      <div id="graph-container" class="graph-container"></div>
+    </div>
+
+    <div id="sync-progress-modal" class="sync-progress-modal hidden">
+      <div class="sync-progress-card">
+        <div class="sync-progress-title">
+          <span id="sync-progress-icon">⏳</span>
+          <span id="sync-progress-title-text">Drive 동기화 중...</span>
+        </div>
+        <div class="sync-progress-stage" id="sync-progress-stage">시작 준비 중...</div>
+        <div class="sync-progress-bar-wrap">
+          <div id="sync-progress-bar" class="sync-progress-bar"></div>
+        </div>
+        <div class="sync-progress-counts">
+          <span id="sync-progress-counts-text">0 / 0</span>
+          <span id="sync-progress-percent">0%</span>
+        </div>
+        <div id="sync-progress-current" class="sync-progress-current"></div>
+        <div id="sync-progress-summary" class="sync-progress-summary hidden"></div>
+        <div class="sync-progress-actions">
+          <button id="sync-progress-close" type="button" class="sync-progress-close hidden">닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ppt-modal" class="ppt-modal hidden">
+      <div class="ppt-modal-panel">
+        <div class="ppt-modal-header">
+          <span>슬라이드 미리보기</span>
+          <button id="ppt-modal-close" type="button">닫기</button>
+        </div>
+        <div class="ppt-modal-body">
+          <ul id="ppt-slide-list" class="ppt-slide-list"></ul>
+          <div id="ppt-slide-preview" class="ppt-slide-preview"></div>
+        </div>
+        <div class="ppt-modal-footer">
+          <span id="ppt-slide-count" class="ppt-slide-count"></span>
+          <span id="ppt-ai-status" class="ppt-ai-status"></span>
+          <div class="ppt-footer-actions">
+            <button id="ppt-ai-summarize" type="button" class="ppt-ai-btn">🤖 AI 요약 + 그래픽화</button>
+            <button id="ppt-reset" type="button" class="ppt-reset-btn" title="원본으로 되돌리기">↺</button>
+            <button id="ppt-download" type="button" class="ppt-download-btn">다운로드 PPTX</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <script src="app.js?v=sync-progress"></script>
+  </body>
+</html>

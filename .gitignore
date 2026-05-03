@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.local
+data/
+notes/u_*/
+notes/_legacy/
+*.log
+server.err
+server.log
+.DS_Store
+.ai-index/
+.omc/
