@@ -66,7 +66,7 @@ const relativeNoteName = (filePath) => {
 
 const server = new Server(
   {
-    name: "obsidian-like-editor",
+    name: "StMarkdownEditor",
     version: "1.0.0",
   },
   {

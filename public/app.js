@@ -3601,4 +3601,8 @@ async function bootApp() {
   await fetchDriveNotes();
 }
 
+if (window.marked) {
+  window.marked.use({ breaks: true, gfm: true });
+}
+
 bootApp();

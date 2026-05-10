@@ -326,7 +326,7 @@ npm run mcp        # → node mcp-server.js
 
 `mcp-server.js`는 Model Context Protocol(MCP)을 구현한 stdio 기반 서버다. Claude Desktop이나 다른 MCP 클라이언트가 이 서버를 통해 notes 폴더의 파일을 직접 읽고 쓸 수 있다.
 
-- **서버 이름**: `obsidian-like-editor`
+- **서버 이름**: `StMarkdownEditor`
 - **버전**: `1.0.0`
 - **트랜스포트**: `StdioServerTransport` (stdin/stdout)
 - **실행 방법**: `npm run mcp` (node mcp-server.js)
@@ -988,4 +988,4 @@ applyRenamedNote(oldName, newName)
 | `OPENAI_MODEL` | 선택 | `gpt-4o-mini` | 사용할 OpenAI 모델 ID |
 | `LANGSMITH_API_KEY` | 선택 | 없음 | LangSmith 추적 API 키 |
 | `LANGSMITH_ENDPOINT` | 선택 | LangSmith 기본값 | LangSmith API 엔드포인트 |
-| `LANGSMITH_PROJECT` | 선택 | `obsidian-like-editor` | LangSmith 프로젝트명 |
+| `LANGSMITH_PROJECT` | 선택 | `StMarkdownEditor` | LangSmith 프로젝트명 |

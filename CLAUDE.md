@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-**이름**: obsidian-like-editor (실행 시 표시명: Markdown Editor)
+**이름**: StMarkdownEditor (실행 시 표시명: Markdown Editor)
 **성격**: 다중 사용자 마크다운 노트 편집기. 로컬 파일과 Google Drive를 병행 저장소로 사용. AI 보조 기능(태그 추출, Q&A, PPT 변환) 내장.
 
 **주요 가치**:
@@ -101,7 +101,7 @@ proj08-textedit/
 | `OPENAI_MODEL` | - | 기본 `gpt-4o-mini` |
 | `LANGSMITH_API_KEY` | 옵션 | LLM 호출 트래킹 |
 | `LANGSMITH_ENDPOINT` | 옵션 | Langsmith API 엔드포인트 |
-| `LANGSMITH_PROJECT` | 옵션 | 기본 `obsidian-like-editor` |
+| `LANGSMITH_PROJECT` | 옵션 | 기본 `StMarkdownEditor` |
 | `GOOGLE_CLIENT_ID` | 인증 | OAuth 2.0 Web Application 클라이언트 ID |
 | `GOOGLE_CLIENT_SECRET` | 인증 | OAuth 클라이언트 시크릿 |
 | `GOOGLE_REDIRECT_URI` | 인증 | `http://localhost:3001/auth/google/callback` |

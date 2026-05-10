@@ -37,7 +37,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const NOTES_DIR = path.join(__dirname, "notes");
 const LEGACY_DIR = path.join(NOTES_DIR, "_legacy");
-const LANGSMITH_PROJECT = process.env.LANGSMITH_PROJECT || "obsidian-like-editor";
+const LANGSMITH_PROJECT = process.env.LANGSMITH_PROJECT || "StMarkdownEditor";
 const langsmithClient = process.env.LANGSMITH_API_KEY
   ? new LangSmithClient({
       apiKey: process.env.LANGSMITH_API_KEY,
