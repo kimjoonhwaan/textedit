@@ -46,6 +46,8 @@ const langsmithClient = process.env.LANGSMITH_API_KEY
     })
   : null;
 
+console.log("[debug] SESSION_SECRET:", JSON.stringify(process.env.SESSION_SECRET));
+console.log("[debug] NODE_ENV:", process.env.NODE_ENV);
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (!SESSION_SECRET) {
   console.error("[fatal] SESSION_SECRET 환경변수가 없습니다. 서버를 종료합니다.");
