@@ -3606,3 +3606,47 @@ if (window.marked) {
 }
 
 bootApp();
+
+// ===== 모바일 반응형 =====
+const sidebarToggleBtn = document.getElementById("sidebar-toggle");
+const sidebarOverlay = document.getElementById("sidebar-overlay");
+const toolbarMoreBtn = document.getElementById("toolbar-more");
+const mobileSidebar = document.querySelector(".sidebar");
+
+function openMobileSidebar() {
+  mobileSidebar?.classList.add("mobile-open");
+  sidebarOverlay?.classList.add("visible");
+  document.body.style.overflow = "hidden";
+}
+
+function closeMobileSidebar() {
+  mobileSidebar?.classList.remove("mobile-open");
+  sidebarOverlay?.classList.remove("visible");
+  document.body.style.overflow = "";
+}
+
+sidebarToggleBtn?.addEventListener("click", () => {
+  mobileSidebar?.classList.contains("mobile-open")
+    ? closeMobileSidebar()
+    : openMobileSidebar();
+});
+
+sidebarOverlay?.addEventListener("click", closeMobileSidebar);
+
+// 노트 클릭 시 사이드바 자동 닫기
+mobileSidebar?.addEventListener("click", (e) => {
+  if (window.innerWidth >= 768) return;
+  if (e.target.closest("[data-note]") || e.target.closest(".note-item")) {
+    closeMobileSidebar();
+  }
+});
+
+// 툴바 더보기 토글
+let toolbarMoreOpen = false;
+toolbarMoreBtn?.addEventListener("click", () => {
+  toolbarMoreOpen = !toolbarMoreOpen;
+  document.querySelectorAll(".toolbar-extra").forEach((el) => {
+    el.classList.toggle("visible", toolbarMoreOpen);
+  });
+  toolbarMoreBtn.textContent = toolbarMoreOpen ? "✕" : "···";
+});

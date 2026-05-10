@@ -2219,3 +2219,86 @@ button.secondary:hover {
 .sync-progress-close:hover {
   background: var(--accent-hover);
 }
+
+/* ===== 모바일 반응형 ===== */
+
+/* 데스크톱에서 모바일 전용 요소 숨김 */
+@media (min-width: 768px) {
+  .mobile-only { display: none !important; }
+  .sidebar-overlay { display: none !important; }
+  .toolbar-extra { display: contents !important; }
+}
+
+@media (max-width: 767px) {
+  /* 사이드바: 오버레이 슬라이드 */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 80vw;
+    max-width: 290px;
+    z-index: 1500;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* 딤 오버레이 */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1499;
+  }
+
+  .sidebar-overlay.visible {
+    display: block;
+  }
+
+  /* 에디터 전체 너비 */
+  .editor {
+    width: 100%;
+  }
+
+  /* 모바일 전용 요소 표시 */
+  .mobile-only {
+    display: inline-flex !important;
+  }
+
+  /* 비핵심 툴바 그룹 기본 숨김 */
+  .toolbar-extra {
+    display: none;
+  }
+
+  .toolbar-extra.visible {
+    display: contents;
+  }
+
+  /* 모바일에서 분할 뷰 → 편집만 표시 */
+  .editor-pane.view-split {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-pane.view-split #preview {
+    display: none;
+  }
+
+  /* 툴바 더보기 버튼 스타일 */
+  #toolbar-more {
+    font-size: 18px;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+  }
+
+  /* 사이드바 토글 버튼 스타일 */
+  #sidebar-toggle {
+    font-size: 18px;
+    padding: 4px 8px;
+    margin-right: 4px;
+  }
+}
