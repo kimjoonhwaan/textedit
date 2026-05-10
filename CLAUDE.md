@@ -81,6 +81,7 @@ proj08-textedit/
 - 지원 mimeType: `text/markdown`, `text/plain`, `application/vnd.google-apps.document` (Docs는 read-only, export로 텍스트 추출)
 - `assertOwnedByApp()`이 부모 ancestry를 BFS로 거슬러 올라가 `MarkdownEditor` 외부 파일 차단
 - **자동 미러링**: Drive 노트를 읽거나 저장할 때마다 서버가 동시에 `notes/u_{userId}/{name}.md`에 동일 내용을 저장. `/api/drive/sync-all`로 일괄 동기화 가능
+- **Reconcile**: `reconcileFromDrive(userId)`가 이전 Drive 스냅샷과 현재 트리를 비교해 로컬 파일명/경로를 자동 동기화 (이름 변경, 삭제 반영). `sync-all` 및 `sync-all-stream` 실행 시 reconcile이 먼저 수행됨. Drive Refresh 버튼은 `{ reconcile: true }` 옵션으로 호출
 
 ### AI 기능
 - `POST /api/tags/auto` — 마크다운 → 태그 5개 (콤마 구분 텍스트 응답)
@@ -141,7 +142,8 @@ proj08-textedit/
 - `PUT /api/drive/notes/:fileId` `{content?, name?}` — 저장 + 로컬 미러
 - `DELETE /api/drive/notes/:fileId` — 삭제 + 로컬 미러 삭제
 - `POST /api/drive/sync-all` — 모든 Drive 노트를 로컬에 일괄 미러
-- `POST /api/drive/sync-all-stream` — 동일하나 NDJSON 스트리밍으로 진행상황 실시간 전송 (`event: stage|progress|done|error`)
+- `POST /api/drive/sync-all-stream` — 동일하나 NDJSON 스트리밍으로 진행상황 실시간 전송 (`event: stage|reconciled|progress|done|error`)
+- `POST /api/drive/reconcile` — reconcileFromDrive만 단독 실행. stats `{ renamedFolders, renamedFiles, deletedFolders, deletedFiles }` 반환
 - `GET /api/drive/diagnose` — 부여된 OAuth 스코프 확인 (디버깅용)
 
 ## 프론트엔드 핵심 모듈 (단일 `app.js`)
@@ -150,13 +152,18 @@ proj08-textedit/
 
 | 영역 | 대략 라인 | 키 함수 |
 |---|---|---|
-| DOM 캐시 / 상태 변수 | 1~80 | `editor`, `currentNote`, `currentNoteSource`, `currentDriveFileId`, `currentUser` |
-| 토스트 헬퍼 | 73 | `showToast(msg, type, duration)` |
-| 마크다운 렌더 | ~1230, ~1352 | `escapeHtml`, `renderPreview` |
-| 저장/로드 | ~1589, ~1614 | `saveNote` (source-aware: 로컬 POST vs Drive PUT vs Docs read-only), `loadNote` |
+| DOM 캐시 / 상태 변수 | 1~104 | `editor`, `currentNote`, `currentNoteSource`, `currentDriveFileId`, `currentDriveMimeType`, `currentUser` |
+| 토스트 헬퍼 | 105 | `showToast(msg, type, duration)` |
+| 버전 히스토리 | ~304 | `loadVersions`, `saveVersions`, `renderHistoryList`, `addVersion` (localStorage 기반) |
+| 커스텀 템플릿 | ~150 | `loadCustomTemplates`, `saveCustomTemplates`, `addCustomTemplate`, `getAllTemplates` |
+| 태그/색상 관리 | ~209 | `loadTagsMap`, `saveTagsMap`, `loadColorsMap`, `saveColorsMap`, `getNoteColor`, `setNoteColor`, `getFolderColor`, `setFolderColor` |
+| 노트 목록 렌더 | ~403 | `fetchNotes`, `createNoteListItem`, `buildNoteTree`, `renderNoteList`, `renderFavoriteList`, `renderRecentList` |
+| 파일 임포트 | ~472 | `isImportableFile`, `importFilesToFolder` |
+| 마크다운 렌더 | ~1259, ~1387 | `escapeHtml`, `renderPreview` |
+| 저장/로드 | ~1614, ~1661 | `saveNote` (source-aware: 로컬 POST vs Drive PUT vs Docs read-only), `loadNote` |
 | 검색/그래프 | 다양 | `findDocMatches`, `renderGraph` |
-| PPT 변환 | 2660~3160 | `splitMarkdownIntoSlides`, `aiSummarizeSlides`, `renderSlideToPptx`, `generatePptxFile` |
-| 인증 + Drive | 끝부분 (3170+) | `bootApp`, `fetchCurrentUser`, `fetchDriveNotes`, `loadDriveNote`, `uploadCurrentNoteToDrive`, `syncAllDriveNotes` |
+| PPT 변환 | 2711~3200 | `splitMarkdownIntoSlides`, `aiSummarizeSlides`, `renderSlideToPptx`, `generatePptxFile` |
+| 인증 + Drive | 3208+ | `bootApp`(3576), `fetchCurrentUser`(3251), `fetchDriveNotes({ reconcile? })`(3272), `loadDriveNote`, `uploadCurrentNoteToDrive`, `syncAllDriveNotes` |
 
 ## 실행 방법
 
@@ -204,9 +211,9 @@ npm run mcp
 
 | 파일 | 라인 수 | 권장 읽기 방법 |
 |---|---|---|
-| `public/app.js` | ~3300 | 항상 `Grep` 먼저 → `Read offset/limit`로 좁혀서 |
-| `public/styles.css` | ~1500 | 동일 |
-| `server.js` | ~950 | `Grep "^app\."` 후 라인 점프 |
+| `public/app.js` | ~3608 | 항상 `Grep` 먼저 → `Read offset/limit`로 좁혀서 |
+| `public/styles.css` | ~2221 | 동일 |
+| `server.js` | ~1290 | `Grep "^app\."` 후 라인 점프 |
 | `auth/*.js` | <250 | 통째로 읽어도 OK |
 
 자주 쓰는 Grep 패턴:

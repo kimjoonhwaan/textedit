@@ -1125,8 +1125,7 @@ app.post("/api/drive/sync-all", requireAuth, async (req, res) => {
     for (const f of files) {
       try {
         const file = await readDriveNote(req.userId, f.id);
-        const cleanName = file.name.replace(/\.md$/, "");
-        await mirrorToLocal(req.userId, cleanName, file.content);
+        await mirrorToLocal(req.userId, f.path, file.content);
         mirrored++;
       } catch (err) {
         console.warn("[sync-all]", f.path, err.message);
@@ -1189,8 +1188,7 @@ app.post("/api/drive/sync-all-stream", requireAuth, async (req, res) => {
       let errorMsg = null;
       try {
         const file = await readDriveNote(req.userId, f.id);
-        const cleanName = file.name.replace(/\.md$/, "");
-        await mirrorToLocal(req.userId, cleanName, file.content);
+        await mirrorToLocal(req.userId, f.path, file.content);
         mirrored++;
       } catch (err) {
         failed++;
