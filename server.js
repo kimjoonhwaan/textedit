@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import helmet from "helmet";
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import fs from "fs/promises";
@@ -55,6 +56,25 @@ if (Buffer.from(SESSION_SECRET, "hex").length < 32) {
   process.exit(1);
 }
 
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameSrc: ["'none'"],
+      },
+    },
+  })
+);
 app.use(express.json({ limit: "8mb" }));
 app.use(cookieParser());
 app.use(
@@ -1247,11 +1267,28 @@ async function migrateLegacyNotes() {
   }
 }
 
-fs.mkdir(NOTES_DIR, { recursive: true }).catch((error) => {
+app.use((_req, res) => {
+  res.status(404).json({ error: "요청한 페이지를 찾을 수 없습니다." });
+});
+
+app.use((err, _req, res, _next) => {
+  console.error("[error]", err);
+  res.status(500).json({ error: "서버 오류가 발생했습니다." });
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[uncaughtException]", err);
+  process.exit(1);
+});
+
+await fs.mkdir(NOTES_DIR, { recursive: true }).catch((error) => {
   console.error("[init] notes 폴더 생성 실패:", error);
 });
 
 app.listen(PORT, async () => {
   await migrateLegacyNotes();
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`[server] Listening on port ${PORT}`);
 });

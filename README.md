@@ -153,6 +153,45 @@ npm run mcp
 
 ---
 
+## Railway 배포
+
+### 1. Railway 프로젝트 생성
+
+1. [railway.app](https://railway.app) → New Project → Deploy from GitHub repo
+2. 저장소 연결 후 자동 빌드 시작 (Nixpacks 사용, `npm start` 자동 감지)
+
+### 2. 환경변수 설정
+
+Railway 대시보드 → Variables 탭에서 다음을 설정합니다:
+
+| 변수 | 값 |
+|---|---|
+| `NODE_ENV` | `production` |
+| `SESSION_SECRET` | 32바이트 hex (로컬과 동일하게 생성) |
+| `GOOGLE_CLIENT_ID` | Google OAuth 클라이언트 ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth 클라이언트 시크릿 |
+| `GOOGLE_REDIRECT_URI` | `https://<앱명>.up.railway.app/auth/google/callback` |
+| `OPENAI_API_KEY` | OpenAI API 키 |
+
+> Railway가 자동으로 `PORT`를 주입하므로 별도 설정 불필요합니다.
+
+### 3. Google Cloud Console 추가 설정
+
+OAuth 클라이언트 → 승인된 리디렉션 URI에 Railway URL 추가:
+```
+https://<앱명>.up.railway.app/auth/google/callback
+```
+
+### 4. 영구 저장소 주의사항
+
+Railway 기본 배포는 **ephemeral 파일시스템**입니다. 재배포 시 `notes/`, `data/` 디렉토리가 초기화됩니다.
+
+**권장 운영 방식**: 이 앱은 Google Drive를 source of truth로 설계되어 있습니다. 로그인 후 **⇣ 전체** 버튼으로 Drive에서 노트를 동기화하면 데이터를 복원할 수 있습니다.
+
+영구 저장이 필요하면 Railway Volume(유료)을 `/app/notes` 및 `/app/data` 경로에 마운트하세요.
+
+---
+
 ## 사용 방법
 
 ### 노트 생성
