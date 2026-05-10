@@ -46,8 +46,13 @@ const langsmithClient = process.env.LANGSMITH_API_KEY
     })
   : null;
 
-console.log("[debug] SESSION_SECRET:", JSON.stringify(process.env.SESSION_SECRET));
 console.log("[debug] NODE_ENV:", process.env.NODE_ENV);
+console.log("[debug] PORT:", process.env.PORT);
+console.log("[debug] SESSION_SECRET:", process.env.SESSION_SECRET ? `set(${process.env.SESSION_SECRET.length}자)` : "undefined");
+console.log("[debug] GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "set" : "undefined");
+console.log("[debug] GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "set" : "undefined");
+console.log("[debug] GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI ?? "undefined");
+console.log("[debug] OPENAI_API_KEY:", process.env.OPENAI_API_KEY ? "set" : "undefined");
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (!SESSION_SECRET) {
   console.error("[fatal] SESSION_SECRET 환경변수가 없습니다. 서버를 종료합니다.");
