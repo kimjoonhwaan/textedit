@@ -84,7 +84,6 @@ let currentDriveMimeType = null;
 let driveNotes = [];
 
 let currentNote = null;
-let isBold = false;
 let isSpellcheck = true;
 let isDirty = false;
 let autosaveTimer = null;
@@ -2024,8 +2023,47 @@ const applyEditorStyles = () => {
   const size = fontSizeSelect.value;
   editor.style.fontSize = `${size}px`;
   editor.style.color = fontColorInput.value;
-  editor.style.fontWeight = isBold ? "700" : "400";
-  boldToggle.classList.toggle("active", isBold);
+};
+
+const applyBoldToSelection = () => {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const value = editor.value;
+  const selected = value.slice(start, end);
+
+  if (!selected) {
+    const marker = "**";
+    editor.value = value.slice(0, start) + marker + marker + value.slice(end);
+    const caret = start + marker.length;
+    editor.selectionStart = caret;
+    editor.selectionEnd = caret;
+  } else {
+    const before = value.slice(Math.max(0, start - 2), start);
+    const after = value.slice(end, end + 2);
+    if (before === "**" && after === "**") {
+      editor.value =
+        value.slice(0, start - 2) + selected + value.slice(end + 2);
+      editor.selectionStart = start - 2;
+      editor.selectionEnd = end - 2;
+    } else if (selected.startsWith("**") && selected.endsWith("**") && selected.length >= 4) {
+      const inner = selected.slice(2, -2);
+      editor.value = value.slice(0, start) + inner + value.slice(end);
+      editor.selectionStart = start;
+      editor.selectionEnd = start + inner.length;
+    } else {
+      const wrapped = `**${selected}**`;
+      editor.value = value.slice(0, start) + wrapped + value.slice(end);
+      editor.selectionStart = start + 2;
+      editor.selectionEnd = end + 2;
+    }
+  }
+  editor.focus();
+  renderPreview(editor.value, docSearchQuery);
+  if (docSearchQuery) {
+    findDocMatches();
+  }
+  markDirty();
+  scheduleAutosave();
 };
 
 const applySpellcheck = () => {
@@ -2593,8 +2631,7 @@ historyClose?.addEventListener("click", () => {
 fontSizeSelect.addEventListener("change", applyEditorStyles);
 fontColorInput.addEventListener("input", applyEditorStyles);
 boldToggle.addEventListener("click", () => {
-  isBold = !isBold;
-  applyEditorStyles();
+  applyBoldToSelection();
 });
 
 spellToggle.addEventListener("click", () => {
@@ -2676,8 +2713,7 @@ window.addEventListener("keydown", (event) => {
 
   if (key === "b") {
     event.preventDefault();
-    isBold = !isBold;
-    applyEditorStyles();
+    applyBoldToSelection();
     return;
   }
 
