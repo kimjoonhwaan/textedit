@@ -2051,10 +2051,22 @@ const applyBoldToSelection = () => {
       editor.selectionStart = start;
       editor.selectionEnd = start + inner.length;
     } else {
-      const wrapped = `**${selected}**`;
-      editor.value = value.slice(0, start) + wrapped + value.slice(end);
-      editor.selectionStart = start + 2;
-      editor.selectionEnd = end + 2;
+      const leadMatch = selected.match(/^\s+/);
+      const trailMatch = selected.match(/\s+$/);
+      const lead = leadMatch ? leadMatch[0] : "";
+      const trail = trailMatch ? trailMatch[0] : "";
+      const core = selected.slice(lead.length, selected.length - trail.length);
+      if (!core) {
+        const wrapped = `**${selected}**`;
+        editor.value = value.slice(0, start) + wrapped + value.slice(end);
+        editor.selectionStart = start + 2;
+        editor.selectionEnd = end + 2;
+      } else {
+        const wrapped = `${lead}**${core}**${trail}`;
+        editor.value = value.slice(0, start) + wrapped + value.slice(end);
+        editor.selectionStart = start + lead.length + 2;
+        editor.selectionEnd = editor.selectionStart + core.length;
+      }
     }
   }
   editor.focus();
