@@ -142,6 +142,33 @@ export async function deleteDriveFolderByPath(userId, pathString) {
   return { found: true, id: folderId };
 }
 
+export async function deleteDriveFileByPath(userId, pathString) {
+  const drive = await getDriveClient(userId);
+  const rootId = await ensureAppFolder(userId);
+  const { folders, baseName } = splitNotePath(pathString);
+  if (!baseName) return { found: false };
+  const parentId = folders.length
+    ? await findFolderByPath(drive, rootId, folders)
+    : rootId;
+  if (!parentId) return { found: false };
+  const candidates = [`${baseName}.md`, `${baseName}.txt`, baseName];
+  for (const candidate of candidates) {
+    const escaped = candidate.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    const res = await drive.files.list({
+      q: `'${parentId}' in parents and name='${escaped}' and trashed=false`,
+      fields: "files(id, parents, mimeType)",
+      pageSize: 5,
+    });
+    const file = res.data.files?.[0];
+    if (file) {
+      await assertOwnedByApp(userId, drive, file);
+      await drive.files.delete({ fileId: file.id });
+      return { found: true, id: file.id };
+    }
+  }
+  return { found: false };
+}
+
 function splitPath(p) {
   return String(p || "")
     .replace(/\\/g, "/")

@@ -107,6 +107,7 @@ proj08-textedit/
 | `GOOGLE_CLIENT_SECRET` | 인증 | OAuth 클라이언트 시크릿 |
 | `GOOGLE_REDIRECT_URI` | 인증 | `http://localhost:3001/auth/google/callback` |
 | `SESSION_SECRET` | 인증 | 32바이트 hex. 세션 쿠키 + refresh token 암호화 키 파생 |
+| `STORAGE_DIR` | 옵션 | 외부 영속 디스크 경로(예: Railway Volume `/app/storage`). 설정 시 `notes/`, `data/`를 이 경로 안에 저장. 미설정 시 프로젝트 루트 사용 |
 
 ## API 라우트 요약
 

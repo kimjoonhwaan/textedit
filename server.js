@@ -28,6 +28,7 @@ import {
   ensureDriveFolderPath,
   renameDriveFolder,
   deleteDriveFolderByPath,
+  deleteDriveFileByPath,
   fetchDriveTree,
 } from "./auth/drive.js";
 
@@ -36,7 +37,11 @@ const __dirname = path.dirname(__filename);
 const request = globalThis.fetch ?? fetch;
 const app = express();
 const PORT = process.env.PORT || 3000;
-const NOTES_DIR = path.join(__dirname, "notes");
+const STORAGE_DIR = process.env.STORAGE_DIR
+  ? path.resolve(process.env.STORAGE_DIR)
+  : __dirname;
+const NOTES_DIR = path.join(STORAGE_DIR, "notes");
+const DATA_DIR = path.join(STORAGE_DIR, "data");
 const LEGACY_DIR = path.join(NOTES_DIR, "_legacy");
 const LANGSMITH_PROJECT = process.env.LANGSMITH_PROJECT || "StMarkdownEditor";
 const langsmithClient = process.env.LANGSMITH_API_KEY
@@ -128,7 +133,7 @@ async function deleteLocalMirror(userId, name) {
 }
 
 const driveSnapshotPath = (userId) =>
-  path.join(__dirname, "data", `drive-tree-${userId}.json`);
+  path.join(DATA_DIR, `drive-tree-${userId}.json`);
 
 async function loadDriveSnapshot(userId) {
   try {
@@ -773,12 +778,26 @@ app.delete("/api/notes/:name", requireAuth, async (req, res) => {
   if (!resolved) {
     return res.status(400).json({ error: "파일 이름이 올바르지 않습니다." });
   }
+  let localDeleted = false;
   try {
     await fs.unlink(resolved.filePath);
-    res.json({ name: resolved.safe });
+    localDeleted = true;
   } catch (error) {
-    res.status(404).json({ error: "파일을 찾을 수 없습니다." });
+    if (error.code !== "ENOENT") {
+      return res.status(500).json({ error: "로컬 파일 삭제 실패" });
+    }
   }
+  let driveDeleted = false;
+  try {
+    const result = await deleteDriveFileByPath(req.userId, resolved.safe);
+    driveDeleted = !!result?.found;
+  } catch (err) {
+    console.warn("[drive-sync] 노트 삭제 실패:", err.message);
+  }
+  if (!localDeleted && !driveDeleted) {
+    return res.status(404).json({ error: "파일을 찾을 수 없습니다." });
+  }
+  res.json({ name: resolved.safe, localDeleted, driveDeleted });
 });
 
 app.delete("/api/folders/*", requireAuth, async (req, res) => {
@@ -1291,6 +1310,9 @@ process.on("uncaughtException", (err) => {
 
 await fs.mkdir(NOTES_DIR, { recursive: true }).catch((error) => {
   console.error("[init] notes 폴더 생성 실패:", error);
+});
+await fs.mkdir(DATA_DIR, { recursive: true }).catch((error) => {
+  console.error("[init] data 폴더 생성 실패:", error);
 });
 
 app.listen(PORT, async () => {
