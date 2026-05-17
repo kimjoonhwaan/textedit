@@ -2302,3 +2302,44 @@ button.secondary:hover {
     margin-right: 4px;
   }
 }
+
+/* ===== 행 액션 단일 메뉴 트리거 ===== */
+.row-menu-trigger {
+  padding: 0 6px !important;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+/* ===== 행 액션 팝오버 ===== */
+.row-menu-popover {
+  position: fixed;
+  z-index: 2000;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+}
+.row-menu-item {
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  font-size: var(--fs-sm);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.row-menu-item:hover {
+  background: var(--hover);
+}
+.row-menu-item.danger {
+  color: var(--danger);
+}
+.row-menu-item.danger:hover {
+  background: var(--danger-soft);
+}

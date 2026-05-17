@@ -591,15 +591,20 @@ const createNoteListItem = (
   actions.className = "note-actions";
 
   if (showActions) {
-    actions.appendChild(
-      createActionButton("이름", "action-btn", () => handleRename(name))
-    );
-    actions.appendChild(
-      createActionButton("색상", "action-btn", () => handleNoteColor(name))
-    );
-    actions.appendChild(
-      createActionButton("삭제", "action-btn danger", () => handleDelete(name))
-    );
+    const moreBtn = document.createElement("button");
+    moreBtn.type = "button";
+    moreBtn.className = "action-btn row-menu-trigger";
+    moreBtn.textContent = "⋯";
+    moreBtn.title = "메뉴";
+    moreBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openRowMenu(moreBtn, [
+        { label: "이름 변경", onClick: () => handleRename(name) },
+        { label: "색상", onClick: () => handleNoteColor(name) },
+        { label: "삭제", danger: true, onClick: () => handleDelete(name) },
+      ]);
+    });
+    actions.appendChild(moreBtn);
   }
 
   if (showStar) {
@@ -684,31 +689,22 @@ const renderTree = (node, container, basePath = "") => {
 
     const actions = document.createElement("div");
     actions.className = "folder-actions";
-    actions.appendChild(
-      createActionButton("문서", "action-btn", () =>
-        handleCreateNoteInFolder(folderPath)
-      )
-    );
-    actions.appendChild(
-      createActionButton("추가", "action-btn", () =>
-        handleCreateFolder(folderPath)
-      )
-    );
-    actions.appendChild(
-      createActionButton("이름", "action-btn", () =>
-        handleRenameFolder(folderPath)
-      )
-    );
-    actions.appendChild(
-      createActionButton("색상", "action-btn", () =>
-        handleFolderColor(folderPath)
-      )
-    );
-    actions.appendChild(
-      createActionButton("삭제", "action-btn danger", () =>
-        handleDeleteFolder(folderPath)
-      )
-    );
+    const moreBtn = document.createElement("button");
+    moreBtn.type = "button";
+    moreBtn.className = "action-btn row-menu-trigger";
+    moreBtn.textContent = "⋯";
+    moreBtn.title = "메뉴";
+    moreBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openRowMenu(moreBtn, [
+        { label: "새 문서", onClick: () => handleCreateNoteInFolder(folderPath) },
+        { label: "하위 폴더", onClick: () => handleCreateFolder(folderPath) },
+        { label: "이름 변경", onClick: () => handleRenameFolder(folderPath) },
+        { label: "색상", onClick: () => handleFolderColor(folderPath) },
+        { label: "삭제", danger: true, onClick: () => handleDeleteFolder(folderPath) },
+      ]);
+    });
+    actions.appendChild(moreBtn);
     label.appendChild(actions);
 
     label.addEventListener("dragover", (event) => {
@@ -3698,3 +3694,48 @@ toolbarMoreBtn?.addEventListener("click", () => {
   });
   toolbarMoreBtn.textContent = toolbarMoreOpen ? "✕" : "···";
 });
+
+// ===== 행 액션 메뉴 팝오버 =====
+let activeRowMenu = null;
+function closeRowMenu() {
+  activeRowMenu?.remove();
+  activeRowMenu = null;
+  document.removeEventListener("click", closeRowMenu, true);
+  window.removeEventListener("resize", closeRowMenu);
+  window.removeEventListener("scroll", closeRowMenu, true);
+}
+function openRowMenu(triggerEl, items) {
+  closeRowMenu();
+  const menu = document.createElement("div");
+  menu.className = "row-menu-popover";
+  items.forEach((it) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "row-menu-item" + (it.danger ? " danger" : "");
+    btn.textContent = it.label;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeRowMenu();
+      it.onClick();
+    });
+    menu.appendChild(btn);
+  });
+  document.body.appendChild(menu);
+  const rect = triggerEl.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  const top = rect.bottom + menuRect.height + 4 > window.innerHeight
+    ? Math.max(8, rect.top - menuRect.height - 4)
+    : rect.bottom + 4;
+  const left = Math.max(
+    8,
+    Math.min(rect.right - menuRect.width, window.innerWidth - menuRect.width - 8)
+  );
+  menu.style.top = `${top}px`;
+  menu.style.left = `${left}px`;
+  activeRowMenu = menu;
+  setTimeout(() => {
+    document.addEventListener("click", closeRowMenu, true);
+    window.addEventListener("resize", closeRowMenu);
+    window.addEventListener("scroll", closeRowMenu, true);
+  }, 0);
+}
