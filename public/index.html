@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Markdown Editor</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-light.css"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -167,7 +171,7 @@
         </div>
         <div class="editor-pane view-split">
           <textarea id="editor" placeholder="Markdown을 작성하세요..." spellcheck="true" lang="ko"></textarea>
-          <div id="preview" class="preview"></div>
+          <div id="preview" class="preview markdown-body"></div>
         </div>
       </main>
     </div>
