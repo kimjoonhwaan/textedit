@@ -586,6 +586,60 @@ app.post("/api/ai/ask", requireAuth, async (req, res) => {
   }
 });
 
+app.post("/api/ai/tts", requireAuth, async (req, res) => {
+  let content = (req.body?.content ?? "").toString().trim();
+  if (!content) {
+    return res.status(400).json({ error: "읽을 내용이 필요합니다." });
+  }
+  // OpenAI TTS 입력 길이 제한(4096자)
+  if (content.length > 4096) {
+    content = content.slice(0, 4096);
+  }
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res
+      .status(400)
+      .json({ error: "OPENAI_API_KEY 환경 변수가 필요합니다." });
+  }
+  const allowedVoices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
+  const requestedVoice = (req.body?.voice ?? "").toString();
+  const voice = allowedVoices.includes(requestedVoice) ? requestedVoice : "alloy";
+  let speed = Number(req.body?.speed);
+  if (!Number.isFinite(speed)) speed = 1.0;
+  speed = Math.min(4.0, Math.max(0.25, speed));
+  const model = process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts";
+  try {
+    const response = await request("https://api.openai.com/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        input: content,
+        voice,
+        speed,
+        response_format: "mp3",
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      console.error("[ai/tts] OpenAI 오류:", detail);
+      return res
+        .status(500)
+        .json({ error: "음성 생성 실패. 잠시 후 다시 시도해 주세요." });
+    }
+    const buf = Buffer.from(await response.arrayBuffer());
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Content-Length", buf.length);
+    res.send(buf);
+  } catch (error) {
+    console.error("[ai/tts] 오류:", error);
+    res.status(500).json({ error: "음성 생성 중 오류가 발생했습니다." });
+  }
+});
+
 app.post("/api/ai/pptify", requireAuth, async (req, res) => {
   const content = (req.body?.content ?? "").toString().trim();
   if (!content) {

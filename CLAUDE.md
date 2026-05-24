@@ -86,6 +86,7 @@ proj08-textedit/
 ### AI 기능
 - `POST /api/tags/auto` — 마크다운 → 태그 5개 (콤마 구분 텍스트 응답)
 - `POST /api/ai/ask` — 문서 + 질문 → 답변 (마크다운)
+- `POST /api/ai/tts` — 마크다운 → OpenAI TTS 음성(mp3) 합성. 툴바 "🔊 읽어주기" 버튼. voice/speed는 기본값(alloy/1.0), 4096자 제한
 - `POST /api/ai/pptify` — 마크다운 → 구조화된 슬라이드 JSON (`response_format: json_object`)
   - 4종 레이아웃: `bullets` / `comparison` / `process` / `stat`
   - 각 슬라이드별 2분 분량(500~700자) 발표 스크립트 포함
@@ -100,6 +101,7 @@ proj08-textedit/
 | `PORT` | - | 기본 3000, 보통 3001 |
 | `OPENAI_API_KEY` | AI 기능 | OpenAI Chat Completions |
 | `OPENAI_MODEL` | - | 기본 `gpt-4o-mini` |
+| `OPENAI_TTS_MODEL` | - | TTS(음성 읽어주기) 모델. 기본 `gpt-4o-mini-tts` |
 | `LANGSMITH_API_KEY` | 옵션 | LLM 호출 트래킹 |
 | `LANGSMITH_ENDPOINT` | 옵션 | Langsmith API 엔드포인트 |
 | `LANGSMITH_PROJECT` | 옵션 | 기본 `StMarkdownEditor` |
@@ -134,6 +136,7 @@ proj08-textedit/
 ### AI (requireAuth)
 - `POST /api/tags/auto`
 - `POST /api/ai/ask`
+- `POST /api/ai/tts` `{content, voice?, speed?}` — 마크다운 → OpenAI TTS mp3 바이너리(`audio/mpeg`) 반환
 - `POST /api/ai/pptify`
 
 ### Drive (requireAuth)

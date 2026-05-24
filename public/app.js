@@ -1660,6 +1660,7 @@ const loadNote = async (name) => {
     return;
   }
   const data = await response.json();
+  stopTts();
   currentNoteSource = "local";
   currentDriveFileId = null;
   currentDriveMimeType = null;
@@ -3739,3 +3740,88 @@ function openRowMenu(triggerEl, items) {
     window.addEventListener("scroll", closeRowMenu, true);
   }, 0);
 }
+
+// ===== TTS (음성 읽어주기) =====
+const ttsReadBtn = document.getElementById("tts-read");
+const ttsStopBtn = document.getElementById("tts-stop");
+const ttsStatusEl = document.getElementById("tts-status");
+let ttsAudio = null;
+let ttsObjectUrl = null;
+
+const setTtsStatus = (state, message) => {
+  if (!ttsStatusEl) return;
+  ttsStatusEl.textContent = message ?? "";
+  ttsStatusEl.classList.remove("loading", "success", "error");
+  if (state) {
+    ttsStatusEl.classList.add(state);
+  }
+};
+
+const stopTts = () => {
+  if (ttsAudio) {
+    try {
+      ttsAudio.pause();
+      ttsAudio.src = "";
+    } catch (e) {
+      console.error("[tts] stop 오류:", e);
+    }
+    ttsAudio = null;
+  }
+  if (ttsObjectUrl) {
+    URL.revokeObjectURL(ttsObjectUrl);
+    ttsObjectUrl = null;
+  }
+  if (ttsReadBtn) ttsReadBtn.disabled = false;
+  ttsStopBtn?.classList.add("hidden");
+};
+
+const readAloud = async () => {
+  if (!currentNote) {
+    showToast("먼저 문서를 선택하세요.", "warning");
+    return;
+  }
+  const content = editor.value.trim();
+  if (!content) {
+    showToast("내용이 비어 있습니다.", "warning");
+    return;
+  }
+  // 재생 중이면 정지 후 재시작
+  stopTts();
+  if (ttsReadBtn) ttsReadBtn.disabled = true;
+  setTtsStatus("loading", "음성 생성 중...");
+  try {
+    const response = await fetch("/api/ai/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, voice: "alloy", speed: 1.0 }),
+    });
+    if (!response.ok) {
+      let message = "음성 생성 실패";
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const errorData = await response.json().catch(() => ({}));
+        message = errorData.detail || errorData.error || message;
+      } else {
+        const text = await response.text().catch(() => "");
+        if (text) message = text;
+      }
+      throw new Error(message);
+    }
+    const blob = await response.blob();
+    ttsObjectUrl = URL.createObjectURL(blob);
+    ttsAudio = new Audio(ttsObjectUrl);
+    ttsAudio.onended = stopTts;
+    ttsAudio.onerror = () => setTtsStatus("error", "재생 실패");
+    await ttsAudio.play();
+    ttsStopBtn?.classList.remove("hidden");
+    setTtsStatus("success", "재생 중...");
+  } catch (error) {
+    setTtsStatus("error", error.message || "음성 생성 실패");
+    stopTts();
+  } finally {
+    if (ttsReadBtn) ttsReadBtn.disabled = false;
+  }
+};
+
+ttsReadBtn?.addEventListener("click", () => readAloud());
+ttsStopBtn?.addEventListener("click", () => stopTts());
